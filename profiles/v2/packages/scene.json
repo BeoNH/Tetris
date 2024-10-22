@@ -36,8 +36,8 @@
   "camera-infos": {
     "c77ecaa8-c936-46c4-a5b0-98692673ed87": {
       "position": {
-        "x": 589.6153799121785,
-        "y": 377.75502842044665,
+        "x": 444.9758333333333,
+        "y": 383.415,
         "z": 5000
       },
       "rotation": {
@@ -52,16 +52,42 @@
         "z": 0
       },
       "contentRect": {
-        "x": -464.58112219031506,
-        "y": -215.23050401220607,
-        "width": 989,
-        "height": 556.3125
+        "x": 364.844262295082,
+        "y": 0,
+        "width": 1115.1596638655462,
+        "height": 704
       },
-      "scale": 0.4690776330729302
+      "scale": 0.9859943977591037
+    },
+    "b663db56-b664-41ef-b56e-72122b0ee1a5": {
+      "position": {
+        "x": 160.5,
+        "y": 286,
+        "z": 5000
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "w": 1
+      },
+      "viewCenter": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "contentRect": {
+        "x": 0,
+        "y": 0,
+        "width": 311,
+        "height": 554.1806853582555
+      },
+      "scale": 0.9688473520249221
     }
   },
   "camera-uuids": [
-    "c77ecaa8-c936-46c4-a5b0-98692673ed87"
+    "c77ecaa8-c936-46c4-a5b0-98692673ed87",
+    "b663db56-b664-41ef-b56e-72122b0ee1a5"
   ],
   "camera": {
     "color": [
@@ -83,5 +109,26 @@
     "iso": 0,
     "aperture": 19,
     "shutter": 7
+  },
+  "float-window": {
+    "position": {
+      "cc": {
+        "Camera": {
+          "dock": false,
+          "top": null,
+          "bottom": 10,
+          "left": null,
+          "right": 10
+        }
+      }
+    }
+  },
+  "scene_view": {
+    "isSceneLightOn": true,
+    "output_device": "__default_design__"
+  },
+  "game-view": {
+    "scaleValue": 67,
+    "sliderValue": 32
   }
 }

@@ -9,8 +9,8 @@ export class MiniMap extends Component {
     @property({ type: Node, tooltip: "Khối" })
     Block: Node = null;
 
-    rows: number = 4;
-    cols: number = 4;
+    rows: number = 3;
+    cols: number = 3;
     grid: number[][] = [];
     previousShape: number[][] | null = null; // Lưu trữ trạng thái trước của hình dạng
 

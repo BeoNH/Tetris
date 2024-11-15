@@ -2,9 +2,10 @@
   "__version__": "1.0.6",
   "general": {
     "designResolution": {
-      "width": 480,
-      "height": 854,
-      "fitHeight": true
+      "width": 522,
+      "height": 800,
+      "fitHeight": true,
+      "fitWidth": true
     }
   }
 }

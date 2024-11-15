@@ -2,5 +2,64 @@
   "__version__": "1.3.7",
   "log": {
     "level": 4
+  },
+  "common": {
+    "polyfills": {
+      "asyncFunctions": true
+    },
+    "buildPath": "project://build",
+    "outputName": "web-mobile",
+    "mainBundleCompressionType": "merge_dep",
+    "platform": "web-mobile",
+    "md5Cache": true
+  },
+  "BuildTaskManager": {
+    "taskMap": {
+      "1731317091365": {
+        "type": "build",
+        "id": "1731317091365",
+        "progress": 1,
+        "state": "success",
+        "stage": "build",
+        "message": "11-13-2024 16:45:48 build success in 9 s!",
+        "options": {
+          "name": "Tetris",
+          "server": "",
+          "platform": "web-mobile",
+          "buildPath": "project://build",
+          "debug": false,
+          "md5Cache": true,
+          "skipCompressTexture": false,
+          "sourceMaps": false,
+          "polyfills": {
+            "asyncFunctions": true
+          },
+          "experimentalEraseModules": false,
+          "startSceneAssetBundle": false,
+          "bundleConfigs": [],
+          "useBuiltinServer": false,
+          "mainBundleIsRemote": false,
+          "mainBundleCompressionType": "merge_dep",
+          "useSplashScreen": true,
+          "bundleCommonChunk": false,
+          "packAutoAtlas": true,
+          "startScene": "b663db56-b664-41ef-b56e-72122b0ee1a5",
+          "outputName": "web-mobile",
+          "taskName": "web-mobile",
+          "scenes": [
+            {
+              "url": "db://assets/GamePlay.scene",
+              "uuid": "b663db56-b664-41ef-b56e-72122b0ee1a5"
+            }
+          ],
+          "packages": {},
+          "__version__": "1.3.7",
+          "buildMode": "normal",
+          "logDest": "project://temp/builder/log/web-mobile11-11-2024 16-24.log"
+        },
+        "time": "11-13-2024 16:45:38",
+        "dirty": false
+      }
+    }
   }
 }

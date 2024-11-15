@@ -1,6 +1,7 @@
-import { _decorator, Button, CCInteger, Component, instantiate, Node, Sprite, SpriteFrame, v3 } from 'cc';
+import { _decorator, Button, CCInteger, Component, find, instantiate, Node, Sprite, SpriteFrame, v3 } from 'cc';
 import { GameManager } from './GameManager';
 import { NumberScrolling } from './NumberScrolling';
+import { AudioController } from './AudioController';
 const { ccclass, property } = _decorator;
 
 @ccclass('Tetris')
@@ -13,7 +14,7 @@ export class Tetris extends Component {
     button: Button = null;
 
     @property({ type: SpriteFrame, tooltip: "Màu khối" })
-    ANHTEST: SpriteFrame[] = [];
+    ANHBLOCK: SpriteFrame[] = [];
 
     @property({ type: NumberScrolling, tooltip: "Điểm" })
     numScore: NumberScrolling = null;
@@ -27,10 +28,14 @@ export class Tetris extends Component {
     @property({ type: CCInteger, tooltip: "Cột" })
     cols: number = 10;
 
+    @property({ type: Node, tooltip: "Popup Game over" })
+    popupGameOver: Node = null;
+
     grid: number[][] = []; // Định nghĩa lưới
     currentShape: any = { x: 0, y: 0, shape: undefined }; // tọa độ và tham số hình khối hiện tại mà chúng ta có thể cập nhật
     nextShape: any = { x: 0, y: 0, shape: undefined };
-    speeds: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 1]; // danh sách các tốc độ trò chơi có sẵn
+    originalSpeed: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 1]; // danh sách các tốc độ trò chơi có sẵn
+    speeds: number; // Biến lưu tốc độ
     elapsedTime: number = 0; // Biến đếm thời gian
     elapsedScoreTime: number = 0; // Biến đếm điểm theo thời gian
 
@@ -41,28 +46,32 @@ export class Tetris extends Component {
     // bag: any[] = []; // lưu trữ hình khối
     // bagIndex: number = 0; // chỉ số cho các hình khối trong túi
 
-    isPlay: boolean = true; // kiểm tra hết phiên
+    isPlay: boolean = false; // kiểm tra hết phiên
+    isGameOver: boolean = false; // kiểm tra hết phiên
 
     protected onLoad(): void {
-        this.reset();
         this.showGrid();
         this.showShape();
+        this.showMenu();
 
-        GameManager.nextShapeImage = this.ANHTEST;
-    }
+        GameManager.nextShapeImage = this.ANHBLOCK;
 
-    start() {
         if (this.button) {
-            this.button.node.on(Node.EventType.TOUCH_START, this.onButtonHoldStart, this);
-            this.button.node.on(Node.EventType.TOUCH_END, this.onButtonHoldEnd, this);
+            this.button.node.on(Node.EventType.TOUCH_START, this.onHoldDownStart, this);
+            this.button.node.on(Node.EventType.TOUCH_END, this.onHoldDownEnd, this);
+            this.button.node.on(Node.EventType.TOUCH_CANCEL, this.onHoldDownEnd, this);
         }
     }
 
+    start() {
+
+    }
+
     update(dt: number) {
-        if (this.isPlay) {
+        if (this.isPlay && !this.isGameOver) {
             this.elapsedScoreTime += dt;
             this.elapsedTime += dt * 1000; //mili giây
-            if (this.elapsedTime >= this.speeds[this.level]) {
+            if (this.elapsedTime >= this.speeds) {
                 this.moveDown();
                 this.elapsedTime = 0; // Reset thời gian
             }
@@ -78,9 +87,15 @@ export class Tetris extends Component {
     // Reset trò chơi
     reset() {
         this.grid = this.createGrid();
+        this.showShape();
         this.elapsedScoreTime = 0;
         this.score = 0;
         this.level = 0;
+        this.speeds = this.originalSpeed[this.level];
+        this.isGameOver = false;
+        this.numScore.to(this.score);
+        this.numLevel.to(this.level);
+        this.popupGameOver.active = false;
         // this.generateBag();
         this.currentShape = this.createRandomShape();
         this.nextShape = this.createRandomShape();
@@ -169,7 +184,7 @@ export class Tetris extends Component {
                         nodeShape.getComponent(Sprite).spriteFrame = null;
                         break;
                     default:
-                        nodeShape.getComponent(Sprite).spriteFrame = this.ANHTEST[value - 1];
+                        nodeShape.getComponent(Sprite).spriteFrame = this.ANHBLOCK[value - 1];
                         break;
                 }
             }
@@ -187,12 +202,11 @@ export class Tetris extends Component {
         if (this.collides()) {
             this.currentShape.y--;
             this.applyShape();
-            this.showShape();
             this.nextShapeHandler();
         } else {
             this.applyShape();
-            this.showShape();
         }
+        this.showShape();
     }
 
     // Di chuyển hình khối sang trái
@@ -204,6 +218,8 @@ export class Tetris extends Component {
         }
         this.applyShape();
         this.showShape();
+
+        AudioController.Instance.Move();
     }
 
     // Di chuyển hình khối sang phải
@@ -215,6 +231,8 @@ export class Tetris extends Component {
         }
         this.applyShape();
         this.showShape();
+
+        AudioController.Instance.Move();
     }
 
     // Xoay hình khối
@@ -229,6 +247,8 @@ export class Tetris extends Component {
         }
         this.applyShape();
         this.showShape();
+
+        AudioController.Instance.Rotate();
     }
 
     // Xoay hàng x cột thành cột x hàng
@@ -237,15 +257,20 @@ export class Tetris extends Component {
     }
 
 
-    private originalSpeed: number = this.speeds[0]; // Biến lưu tốc độ gốc
     // tăng tốc độ di chuyển khi giữ nút
-    onButtonHoldStart() {
-        this.originalSpeed = this.speeds[this.level];
-        this.speeds[this.level] = 30;
+    onHoldDownStart() {
+        this.speeds = 30;
+
+        AudioController.Instance.Hold();
     }
 
-    onButtonHoldEnd() {
-        this.speeds[this.level] = this.originalSpeed;
+    onHoldDownEnd() {
+        console.log(this.level)
+        console.log(this.originalSpeed)
+        console.log(this.speeds)
+        this.speeds = this.originalSpeed[this.level];
+        console.log(this.speeds)
+
     }
 
 
@@ -277,6 +302,8 @@ export class Tetris extends Component {
         if (this.collides()) {
             this.gameOver();
         }
+
+        AudioController.Instance.Lock();
     }
 
     // Xóa các hàng đầy đủ
@@ -291,20 +318,60 @@ export class Tetris extends Component {
             this.score += this.scorePlus[rowsCleared];
             this.numScore.to(this.score);
             this.levelCheck();
+
+            AudioController.Instance.LineClear();
         }
     }
 
     // Xử lý kết thúc phiên chơi
     gameOver() {
         this.isPlay = false;
+        this.isGameOver = true;
         // Tính thêm điểm theo thời gian
         let totalScore = this.score + Math.floor(this.elapsedScoreTime) * 10;
-        console.log(totalScore);
+        this.numScore.to(totalScore);
+        this.popupGameOver.active = true;
+
+        AudioController.Instance.Win();
     }
 
     // Kiểm tra level
     levelCheck() {
-        this.level = Math.floor(this.score / 1000);
+        const scoreThresholds = [10, 20, 50, 100, 150, 200, 250, 300, 350, 400, 450]; // Mảng ngưỡng điểm cho từng level    
+        for (let i = 0; i < scoreThresholds.length; i++) {
+            if (this.score < scoreThresholds[i]) {
+                this.level = i;
+                break;
+            }
+            this.level = i + 1;
+        }
         this.numLevel.to(this.level);
+    }
+
+
+    // Hiện thị menu
+    showMenu() {
+        this.reset();
+        this.isPlay = false;
+        find(`Canvas/Menu`).active = true;
+        find(`Canvas/Pause`).active = false;
+    }
+
+    // Bắt đầu chơi game
+    closeMenu() {
+        this.reset();
+        this.isPlay = true;
+        find(`Canvas/Menu`).active = false;
+    }
+
+    //
+    showPanel() {
+        this.isPlay = false;
+        find(`Canvas/Pause`).active = true;
+    }
+
+    closePanel() {
+        this.isPlay = true;
+        find(`Canvas/Pause`).active = false;
     }
 }

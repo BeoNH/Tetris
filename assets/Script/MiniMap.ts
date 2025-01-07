@@ -10,7 +10,7 @@ export class MiniMap extends Component {
     Block: Node = null;
 
     rows: number = 3;
-    cols: number = 3;
+    cols: number = 4;
     grid: number[][] = [];
     previousShape: number[][] | null = null; // Lưu trữ trạng thái trước của hình dạng
 

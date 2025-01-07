@@ -2,6 +2,9 @@ import { _decorator, Button, CCInteger, Component, find, instantiate, Node, Spri
 import { GameManager } from './GameManager';
 import { NumberScrolling } from './NumberScrolling';
 import { AudioController } from './AudioController';
+import { APIManager } from './API_batta/APIManager';
+import Request from './API_batta/Request';
+
 const { ccclass, property } = _decorator;
 
 @ccclass('Tetris')
@@ -34,12 +37,12 @@ export class Tetris extends Component {
     grid: number[][] = []; // Định nghĩa lưới
     currentShape: any = { x: 0, y: 0, shape: undefined }; // tọa độ và tham số hình khối hiện tại mà chúng ta có thể cập nhật
     nextShape: any = { x: 0, y: 0, shape: undefined };
-    originalSpeed: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 1]; // danh sách các tốc độ trò chơi có sẵn
+    originalSpeed: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 10, 1]; // danh sách các tốc độ trò chơi có sẵn
     speeds: number; // Biến lưu tốc độ
     elapsedTime: number = 0; // Biến đếm thời gian
-    elapsedScoreTime: number = 0; // Biến đếm điểm theo thời gian
+    // elapsedScoreTime: number = 0; // Biến đếm điểm theo thời gian
 
-    scorePlus: number[] = [0, 10, 30, 50, 80]; //Điểm được cộng theo số hàng xoá
+    scorePlus: number[] = [0, 100, 300, 500, 800]; //Điểm được cộng theo số hàng xoá
     score: number = 0; //Điểm số
     level: number = 0; //Cấp độ
 
@@ -64,12 +67,12 @@ export class Tetris extends Component {
     }
 
     start() {
-
+        
     }
 
     update(dt: number) {
         if (this.isPlay && !this.isGameOver) {
-            this.elapsedScoreTime += dt;
+            // this.elapsedScoreTime += dt;
             this.elapsedTime += dt * 1000; //mili giây
             if (this.elapsedTime >= this.speeds) {
                 this.moveDown();
@@ -88,7 +91,7 @@ export class Tetris extends Component {
     reset() {
         this.grid = this.createGrid();
         this.showShape();
-        this.elapsedScoreTime = 0;
+        // this.elapsedScoreTime = 0;
         this.score = 0;
         this.level = 0;
         this.speeds = this.originalSpeed[this.level];
@@ -265,12 +268,7 @@ export class Tetris extends Component {
     }
 
     onHoldDownEnd() {
-        console.log(this.level)
-        console.log(this.originalSpeed)
-        console.log(this.speeds)
         this.speeds = this.originalSpeed[this.level];
-        console.log(this.speeds)
-
     }
 
 
@@ -328,18 +326,20 @@ export class Tetris extends Component {
         this.isPlay = false;
         this.isGameOver = true;
         // Tính thêm điểm theo thời gian
-        let totalScore = this.score + Math.floor(this.elapsedScoreTime) * 10;
+        // let totalScore = this.score + Math.floor(this.elapsedScoreTime) * 10;
+        let totalScore = this.score;
         this.numScore.to(totalScore);
         this.popupGameOver.active = true;
 
+        this.logSaveScore(totalScore);
         AudioController.Instance.Win();
     }
 
     // Kiểm tra level
     levelCheck() {
-        const scoreThresholds = [10, 20, 50, 100, 150, 200, 250, 300, 350, 400, 450]; // Mảng ngưỡng điểm cho từng level    
+        const scoreThresholds = [100, 200, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500]; // Mảng ngưỡng điểm cho từng level    
         for (let i = 0; i < scoreThresholds.length; i++) {
-            if (this.score < scoreThresholds[i]) {
+            if (this.score <= scoreThresholds[i]) {
                 this.level = i;
                 break;
             }
@@ -373,5 +373,35 @@ export class Tetris extends Component {
     closePanel() {
         this.isPlay = true;
         find(`Canvas/Pause`).active = false;
+    }
+
+    logSaveScore(num) {
+        APIManager.CallLogin(res => {
+            console.log(APIManager.sessionId);
+
+            const tour = APIManager.urlParam(`tournament`);
+            if (tour && tour == 'true') {
+                APIManager.requestData(`/webhook/game/tournament`, {
+                    gameId: APIManager.gameID,
+                    score: num,
+                }, res => { })
+            }
+    
+    
+            const leaderboard = APIManager.urlParam(`leaderboard`);
+            if (leaderboard && leaderboard == 'true')
+                APIManager.requestData(`/webhook/game/leaderboard`, {
+                    gameId: APIManager.gameID,
+                    score: num,
+                }, res => { })
+    
+    
+            const challenge = APIManager.urlParam(`challenge`);
+            if (challenge && challenge == 'true')
+                APIManager.requestData(`/webhook/game/challenge`, {
+                    gameId: APIManager.gameID,
+                    score: num,
+                }, res => { })
+        });
     }
 }

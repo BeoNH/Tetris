@@ -1337,7 +1337,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 156.079,
+      "x": 144.627,
       "y": 17.949,
       "z": 0
     },
@@ -1385,7 +1385,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 30.227,
+      "x": 44.629,
       "y": 23.878,
       "z": 0
     },
@@ -4359,7 +4359,7 @@
       "__id__": 107
     },
     "_children": [],
-    "_active": true,
+    "_active": false,
     "_components": [
       {
         "__id__": 117
@@ -5920,7 +5920,7 @@
       "__expectedType__": "cc.AudioClip"
     },
     "_loop": true,
-    "_playOnAwake": true,
+    "_playOnAwake": false,
     "_volume": 1,
     "_id": "a1HKB24AxGaalNEijN+y4k"
   },

@@ -5,27 +5,38 @@ const { ccclass, property } = _decorator;
 @ccclass('APIManager')
 export class APIManager extends Component {
 
-    public static urlAPI: string = "https://api-tele.gamebatta.com";// batta
+    public static urlAPI: string = "https://apiminigame-kh.gamebatta.com/api-minigame";// batta
 
     public static gameID = 66;
     public static key = '53a678a6-7210-41ba-a6d2-07180beb4ef4';
     public static sessionId;
 
+    // public static sessionID;
+    public static userDATA: {
+        id?: number;
+        username?: string;
+        [key: string]: any; // Cho phép thêm thuộc tính động nếu cần
+    } = {};
+
     public static requestData(key: string, data: any, callBack: (response: any) => void) {
-        const url = APIManager.urlAPI + key;
-        APIManager.CallPost(data, url, (response) => {
+        const url = this.urlAPI + key;
+        // const url = "https://" + this.urlParam("url_api") + key;
+
+
+        APIManager.CallRequest(`POST`, data, url, (response) => {
             callBack(response);
         }, (xhr) => {
-            xhr.setRequestHeader('Authorization', 'Bearer ' + APIManager.urlParam(`token`));
-            xhr.setRequestHeader('game_key', APIManager.key);
-            xhr.setRequestHeader('x-session-id', APIManager.sessionId);
+            // xhr.setRequestHeader('Authorization', 'Bearer ' + APIManager.urlParam(`token`));
             xhr.setRequestHeader("Content-type", "application/json");
         });
     }
 
-    public static CallPost(data, url, callback, callbackHeader) {
+    public static CallRequest(method, data, url, callback, callbackHeader) {
         let param = this;
         var xhr = new XMLHttpRequest();
+
+        xhr.onerror = () => {
+        };
 
         xhr.ontimeout = () => {
         }
@@ -36,77 +47,41 @@ export class APIManager extends Component {
         xhr.onloadend = () => {
         }
 
-        xhr.onerror = () => {
-            console.error('Request error.');
-        };
-
         xhr.onreadystatechange = () => {
             if (xhr.readyState != 4) return;
             if (xhr.status == 200 && xhr.responseText) {
                 var response = JSON.parse(xhr.responseText);
-
-                console.log("CallPost=>", url, "\n", response);
-
+                console.log(`Call.${method}=>`, url, "\n", response);
                 callback(response);
             }
+            else {
+                response = JSON.parse(xhr.responseText);
+                response.status = xhr.status;
+                callback(null);
+            }
         };
-        xhr.open('POST', url, true);
+        xhr.open(method, url, true);
         callbackHeader(xhr);
-        
-        const body = Request.encryptDataTS({
-            ...(data || {}),
-            timestamp: Date.now(),
-            request_ID: Request.generateRandomID(),
-        });
-        
-        // console.log("body: ", body);
-        // console.log("decryptDataTS(body): ", Request.decryptDataTS(body));
-        xhr.send(JSON.stringify(body));
+        let body
+        if (data != null)
+            body = JSON.stringify({
+                ...data,
+                "source": APIManager.urlParam("url_api"),
+                "game_name": "tetris"
+            });
+        else
+            body = data
+        // console.log(method, "body: ", body)
+        xhr.send(body);
     }
 
-    public static CallLogin(callback) {
-        let param = this;
-        const url = APIManager.urlAPI + '/user-service/game/login';
-        var xhr = new XMLHttpRequest();
-
-        xhr.ontimeout = () => {
-        }
-
-        xhr.onabort = () => {
-        }
-
-        xhr.onloadend = () => {
-        }
-
-        xhr.onerror = () => {
-            console.error('Request error.');
-        };
-
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState != 4) return;
-            if (xhr.status == 200 && xhr.responseText) {
-                var response = JSON.parse(xhr.responseText);
-
-                console.log("CallPost=>", url, "\n", response);
-
-                if (response.encryptedData) {
-                    response = Request.decryptDataTS(response);
-                    response = JSON.parse(response) || response;
-                };
-                APIManager.sessionId = response.data.sessionId;
-
-                callback(response);
-            }
-        };
-        xhr.open('POST', url, true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + APIManager.urlParam(`token`));
-        xhr.setRequestHeader('game_key', APIManager.key);
-        xhr.setRequestHeader("Content-type", "application/json");
-
-        const body = JSON.stringify({
-            "gameId": APIManager.gameID,
-        })
-        xhr.send(body);
+    public static logChallenge(name: string, score: number) {
+        APIManager.requestData(`/updateEventChallenge`, {
+            "username": APIManager.userDATA?.username,
+            "name": name,
+            "score": score
+            // [name]: score,
+        }, res => { })
     }
 
     public static urlParam(name) {

@@ -1,9 +1,11 @@
-import { _decorator, Button, CCInteger, Component, find, instantiate, Node, Sprite, SpriteFrame, v3 } from 'cc';
+import { _decorator, Button, CCInteger, Component, find, instantiate, Label, Node, Sprite, SpriteFrame, v3 } from 'cc';
 import { GameManager } from './GameManager';
 import { NumberScrolling } from './NumberScrolling';
 import { AudioController } from './AudioController';
 import { APIManager } from './API_batta/APIManager';
 import Request from './API_batta/Request';
+import { PopupHistory } from '../Scripts/PopupHistory';
+import { PopupRank } from '../Scripts/PopupRank';
 
 const { ccclass, property } = _decorator;
 
@@ -26,7 +28,7 @@ export class Tetris extends Component {
     numLevel: NumberScrolling = null;
 
     @property({ type: CCInteger, tooltip: "Hàng" })
-    rows: number = 21; // thêm 1 hàng trên cùng tránh bắt va chạm
+    rows: number = 19; // thêm 1 hàng trên cùng tránh bắt va chạm
 
     @property({ type: CCInteger, tooltip: "Cột" })
     cols: number = 10;
@@ -34,10 +36,19 @@ export class Tetris extends Component {
     @property({ type: Node, tooltip: "Popup Game over" })
     popupGameOver: Node = null;
 
+    @property({ type: Node, tooltip: "Popup Login" })
+    popupLogin: Node = null;
+
+    @property({ type: Node, tooltip: "Nút xếp hạng" })
+    btnRank: Node = null;
+
+    @property({ type: Node, tooltip: "Nút lịch sử" })
+    btnHis: Node = null;
+
     grid: number[][] = []; // Định nghĩa lưới
     currentShape: any = { x: 0, y: 0, shape: undefined }; // tọa độ và tham số hình khối hiện tại mà chúng ta có thể cập nhật
     nextShape: any = { x: 0, y: 0, shape: undefined };
-    originalSpeed: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 10, 1]; // danh sách các tốc độ trò chơi có sẵn
+
     speeds: number; // Biến lưu tốc độ
     elapsedTime: number = 0; // Biến đếm thời gian
     // elapsedScoreTime: number = 0; // Biến đếm điểm theo thời gian
@@ -52,6 +63,8 @@ export class Tetris extends Component {
     isPlay: boolean = false; // kiểm tra hết phiên
     isGameOver: boolean = false; // kiểm tra hết phiên
 
+    numTurn: number = 0; //Số lượt choiwf
+
     protected onLoad(): void {
         this.showGrid();
         this.showShape();
@@ -64,10 +77,24 @@ export class Tetris extends Component {
             this.button.node.on(Node.EventType.TOUCH_END, this.onHoldDownEnd, this);
             this.button.node.on(Node.EventType.TOUCH_CANCEL, this.onHoldDownEnd, this);
         }
+
+        this.loginBata();
     }
 
-    start() {
-        
+    loginBata() {
+        this.popupLogin.active = true;
+        this.popupLogin.getChildByPath(`txt`).getComponent(Label).string = `Login . . .`;
+
+        const data = {
+            "token": APIManager.urlParam(`token`),
+            // "token": `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU4IiwidXNlcm5hbWUiOiJiZW9uaDEyMyIsImVtYWlsIjoiaG9hbmduZ3V5ZW5oYnNAZ21haWwuY29tIiwiaXNDcmVhdG9ycyI6ZmFsc2UsInJhbmsiOiJCcm9uemUiLCJpYXQiOjE3NDU4MjQyMzYsImV4cCI6MTc0NTgzNTAzNn0.Ik5NPuqt3IhyI4qjeepABKY2mkSuDokDmEDTveJSAjI`,
+        };
+        APIManager.requestData(`/login`, data, res => {
+            if(!res) return;
+            this.popupLogin.active = false;
+            APIManager.userDATA = res;
+            console.log(">>APIManager.userDATALogin", APIManager.userDATA);
+        })
     }
 
     update(dt: number) {
@@ -81,12 +108,6 @@ export class Tetris extends Component {
         }
     }
 
-    // Tính tốc độ dựa trên cấp độ
-    getSpeedForLevel(level: number): number {
-        return Math.max(1000 - level * 100, 100);
-    }
-
-
     // Reset trò chơi
     reset() {
         this.grid = this.createGrid();
@@ -94,7 +115,7 @@ export class Tetris extends Component {
         // this.elapsedScoreTime = 0;
         this.score = 0;
         this.level = 0;
-        this.speeds = this.originalSpeed[this.level];
+        this.speeds = this.calculateFallSpeed();
         this.isGameOver = false;
         this.numScore.to(this.score);
         this.numLevel.to(this.level);
@@ -268,7 +289,7 @@ export class Tetris extends Component {
     }
 
     onHoldDownEnd() {
-        this.speeds = this.originalSpeed[this.level];
+        this.speeds = this.calculateFallSpeed();
     }
 
 
@@ -321,10 +342,17 @@ export class Tetris extends Component {
         }
     }
 
+    // Tính tốc độ rơi
+    calculateFallSpeed() {
+        return Math.max(1000 * (1 - this.level * 0.09), 10);
+    }
+
     // Xử lý kết thúc phiên chơi
     gameOver() {
         this.isPlay = false;
         this.isGameOver = true;
+        this.btnHis.active = true;
+        this.btnRank.active = true;
         // Tính thêm điểm theo thời gian
         // let totalScore = this.score + Math.floor(this.elapsedScoreTime) * 10;
         let totalScore = this.score;
@@ -337,7 +365,7 @@ export class Tetris extends Component {
 
     // Kiểm tra level
     levelCheck() {
-        const scoreThresholds = [100, 200, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500]; // Mảng ngưỡng điểm cho từng level    
+        const scoreThresholds = [100, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]; // Mảng ngưỡng điểm cho từng level    
         for (let i = 0; i < scoreThresholds.length; i++) {
             if (this.score <= scoreThresholds[i]) {
                 this.level = i;
@@ -346,6 +374,7 @@ export class Tetris extends Component {
             this.level = i + 1;
         }
         this.numLevel.to(this.level);
+        this.speeds = this.calculateFallSpeed();
     }
 
 
@@ -353,55 +382,75 @@ export class Tetris extends Component {
     showMenu() {
         this.reset();
         this.isPlay = false;
+        this.btnHis.active = true;
+        this.btnRank.active = true;
         find(`Canvas/Menu`).active = true;
         find(`Canvas/Pause`).active = false;
     }
 
     // Bắt đầu chơi game
     closeMenu() {
-        this.reset();
-        this.isPlay = true;
-        find(`Canvas/Menu`).active = false;
+        if (APIManager.userDATA.remain_turn > 0) {
+            this.reset();
+            this.isPlay = true;
+            find(`Canvas/Menu`).active = false;
+            this.btnHis.active = false;
+            this.btnRank.active = false;
+        } else {
+            this.popupLogin.active = true;
+            this.popupLogin.getChildByPath(`txt`).getComponent(Label).string = `Game's turn is over`;
+            this.scheduleOnce(() => {
+                this.popupLogin.active = false;
+            }, 5)
+            return;
+        }
     }
 
     //
-    showPanel() {
+    showPanel(e: Event, popup: string) {
         this.isPlay = false;
-        find(`Canvas/Pause`).active = true;
+        switch (popup) {
+            case `Pause`:
+                find(`Canvas/Pause`).active = true;
+                break;
+            case `History`:
+                let his = find(`Canvas/History`);
+                his.active = true;
+                his.getComponent(PopupHistory).initHistoryList();
+                break;
+            case `Rank`:
+                let rank = find(`Canvas/Rank`);
+                rank.active = true;
+                rank.getComponent(PopupRank).initRankingList();
+                break;
+        }
     }
 
     closePanel() {
         this.isPlay = true;
         find(`Canvas/Pause`).active = false;
+        find(`Canvas/History`).active = false;
+        find(`Canvas/Rank`).active = false;
     }
 
     logSaveScore(num) {
-        APIManager.CallLogin(res => {
-            console.log(APIManager.sessionId);
-
-            const tour = APIManager.urlParam(`tournament`);
-            if (tour && tour == 'true') {
-                APIManager.requestData(`/webhook/game/tournament`, {
-                    gameId: APIManager.gameID,
-                    score: num,
-                }, res => { })
-            }
-    
-    
-            const leaderboard = APIManager.urlParam(`leaderboard`);
-            if (leaderboard && leaderboard == 'true')
-                APIManager.requestData(`/webhook/game/leaderboard`, {
-                    gameId: APIManager.gameID,
-                    score: num,
-                }, res => { })
-    
-    
-            const challenge = APIManager.urlParam(`challenge`);
-            if (challenge && challenge == 'true')
-                APIManager.requestData(`/webhook/game/challenge`, {
-                    gameId: APIManager.gameID,
-                    score: num,
-                }, res => { })
+        const url = `/saveScore`;
+        const data = {
+            "username": APIManager.userDATA?.username,
+            "score": num,
+            "time": 0
+        };
+        APIManager.requestData(url, data, res => {
+            console.log("Kết thúc game => Gửi server:", data, res);
         });
+
+        // Sự kiện BATTA
+        if (num >= 3000) {
+            APIManager.logChallenge(`tetrisPoint3000`, num);
+        } else if (num >= 2000 && num < 3000) {
+            APIManager.logChallenge(`tetrisPoint2000`, num);
+        } else if (num >= 100) {
+            APIManager.logChallenge(`tetrisPoint1000`, num);
+        }
     }
 }

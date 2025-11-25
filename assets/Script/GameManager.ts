@@ -15,7 +15,7 @@ export class GameManager extends Component {
         };
 
         // độ rộng 1 ô trong map
-        public static readonly widthNode = 30;
+        public static readonly widthNode = 33;
 
         // khối tiếp theo được dùng
         public static nextShape;

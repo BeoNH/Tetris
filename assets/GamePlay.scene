@@ -704,6 +704,9 @@
     "popupLogin": {
       "__id__": 118
     },
+    "btnPause": {
+      "__id__": 55
+    },
     "btnRank": {
       "__id__": 75
     },

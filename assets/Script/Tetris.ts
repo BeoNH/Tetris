@@ -39,6 +39,9 @@ export class Tetris extends Component {
     @property({ type: Node, tooltip: "Popup Login" })
     popupLogin: Node = null;
 
+    @property({ type: Node, tooltip: "Nút dừng game" })
+    btnPause: Node = null;
+
     @property({ type: Node, tooltip: "Nút xếp hạng" })
     btnRank: Node = null;
 
@@ -87,7 +90,6 @@ export class Tetris extends Component {
 
         const data = {
             "token": APIManager.urlParam(`token`),
-            // "token": `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU4IiwidXNlcm5hbWUiOiJiZW9uaDEyMyIsImVtYWlsIjoiaG9hbmduZ3V5ZW5oYnNAZ21haWwuY29tIiwiaXNDcmVhdG9ycyI6ZmFsc2UsInJhbmsiOiJCcm9uemUiLCJpYXQiOjE3NDU4MjQyMzYsImV4cCI6MTc0NTgzNTAzNn0.Ik5NPuqt3IhyI4qjeepABKY2mkSuDokDmEDTveJSAjI`,
         };
         APIManager.requestData(`/login`, data, res => {
             if(!res) return;
@@ -384,6 +386,7 @@ export class Tetris extends Component {
         this.isPlay = false;
         this.btnHis.active = true;
         this.btnRank.active = true;
+        this.btnPause.active = false;
         find(`Canvas/Menu`).active = true;
         find(`Canvas/Pause`).active = false;
     }
@@ -396,6 +399,7 @@ export class Tetris extends Component {
             find(`Canvas/Menu`).active = false;
             this.btnHis.active = false;
             this.btnRank.active = false;
+            this.btnPause.active = true;
         } else {
             this.popupLogin.active = true;
             this.popupLogin.getChildByPath(`txt`).getComponent(Label).string = `Game's turn is over`;

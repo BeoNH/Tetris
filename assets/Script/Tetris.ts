@@ -92,7 +92,7 @@ export class Tetris extends Component {
             "token": APIManager.urlParam(`token`),
         };
         APIManager.requestData(`/login`, data, res => {
-            if(!res) return;
+            if (!res) return;
             this.popupLogin.active = false;
             APIManager.userDATA = res;
             console.log(">>APIManager.userDATALogin", APIManager.userDATA);
@@ -361,7 +361,7 @@ export class Tetris extends Component {
         this.numScore.to(totalScore);
         this.popupGameOver.active = true;
 
-        this.logSaveScore(totalScore);
+        this.logSaveScore();
         AudioController.Instance.Win();
     }
 
@@ -389,6 +389,7 @@ export class Tetris extends Component {
         this.btnPause.active = false;
         find(`Canvas/Menu`).active = true;
         find(`Canvas/Pause`).active = false;
+        find(`Canvas/Exit`).active = false;
     }
 
     // Bắt đầu chơi game
@@ -417,6 +418,9 @@ export class Tetris extends Component {
             case `Pause`:
                 find(`Canvas/Pause`).active = true;
                 break;
+            case `Exit`:
+                find(`Canvas/Exit`).active = true;
+                break;
             case `History`:
                 let his = find(`Canvas/History`);
                 his.active = true;
@@ -433,11 +437,15 @@ export class Tetris extends Component {
     closePanel() {
         this.isPlay = true;
         find(`Canvas/Pause`).active = false;
+        find(`Canvas/Exit`).active = false;
         find(`Canvas/History`).active = false;
         find(`Canvas/Rank`).active = false;
     }
 
-    logSaveScore(num) {
+    logSaveScore() {
+        const num = this.score;
+        if (num <= 0) return;
+
         const url = `/saveScore`;
         const data = {
             "username": APIManager.userDATA?.username,

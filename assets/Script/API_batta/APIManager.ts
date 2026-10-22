@@ -2,10 +2,17 @@ import { _decorator, Component, Node } from 'cc';
 import Request from './Request';
 const { ccclass, property } = _decorator;
 
+
+const PARAMS: Record<string, string> = (() => {
+    const result: Record<string, string> = {};
+    new URLSearchParams(window.location.search).forEach((value, key) => result[key] = value);
+    return result;
+})();
+
 @ccclass('APIManager')
 export class APIManager extends Component {
 
-    public static urlAPI: string = "https://apiminigame-kh.gamebatta.com/api-minigame";// batta
+    public static urlAPI: string = `https://${PARAMS.url_api}/game-service/api-minigame`;// batta
 
     public static userDATA: {
         id?: number;
@@ -57,7 +64,7 @@ export class APIManager extends Component {
         let body
         if (data != null)
             body = JSON.stringify({
-                ...this.PARAMS,
+                ...PARAMS,
                 ...data,
                 "source": APIManager.urlParam("url_api"),
                 "game_name": "tetris"
@@ -81,13 +88,4 @@ export class APIManager extends Component {
         var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.search);
         return (results !== null) ? results[1] || 0 : false;
     }
-    
-    static PARAMS = (() => {
-        const params = new URLSearchParams(window.location.search);
-        const obj = {};
-        for (const [key, value] of params) {
-            obj[key] = value;
-        }
-        return obj;
-    })();
 }
